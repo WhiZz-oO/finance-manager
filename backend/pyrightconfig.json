@@ -1,0 +1,24 @@
+{
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Windows",
+  "venvPath": "E:/ALBIN MATHEWS PROJECT/FINANCE MANAGER/backend",
+  "venv": "venv",
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "reportMissingTypeStubs": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportAttributeAccessIssue": "none",
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "venv",
+    "**/__pycache__",
+    "dist",
+    ".git"
+  ]
+}

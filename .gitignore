@@ -1,0 +1,40 @@
+# Environments & Virtualenv
+backend/venv/
+venv/
+.venv/
+ENV/
+env/
+
+# Dependencies
+frontend/node_modules/
+node_modules/
+
+# Environment Variables & Secrets (Keep your passwords private!)
+.env
+*.env
+backend/.env
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# SQLite local data files
+backend/data/*.db
+backend/data/*.db-wal
+backend/data/*.db-shm
+backend/data/backups/
+backend/data/receipts/
+
+# Build outputs
+frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
