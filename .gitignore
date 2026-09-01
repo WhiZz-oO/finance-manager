@@ -25,7 +25,7 @@ __pycache__/
 backend/data/*.db
 backend/data/*.db-wal
 backend/data/*.db-shm
-backend/data/backups/
+backend/data/backups/21
 backend/data/receipts/
 
 # Build outputs
