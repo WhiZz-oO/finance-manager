@@ -1,16 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import MobileHeader from './MobileHeader'
 import BottomNav from './BottomNav'
 import MobileDrawer from './MobileDrawer'
+import BiometricLockScreen from '../common/BiometricLockScreen'
+import { isLockEnabled, isSessionUnlocked } from '../../utils/biometrics'
 import { Toaster } from 'react-hot-toast'
 
 export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [isLocked, setIsLocked] = useState(() => isLockEnabled() && !isSessionUnlocked())
 
   return (
     <div className="app-layout">
+      {/* Biometric / PIN Lock Screen */}
+      {isLocked && <BiometricLockScreen onUnlock={() => setIsLocked(false)} />}
+
       {/* Desktop Sidebar (hidden on mobile) */}
       <Sidebar />
 

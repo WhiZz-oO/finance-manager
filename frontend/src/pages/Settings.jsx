@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Key, Tag, ShieldCheck } from 'lucide-react'
+import { Plus, Trash2, Key, Tag, ShieldCheck, Fingerprint } from 'lucide-react'
 import { categoriesApi, authApi } from '../api/client'
+import { isLockEnabled, registerBiometric, setLockPin, disableAppLock } from '../utils/biometrics'
 import Modal from '../components/common/Modal'
 import toast from 'react-hot-toast'
 
@@ -198,6 +199,95 @@ export default function Settings() {
               {pwdLoading ? 'Updating...' : 'Update Password'}
             </button>
           </form>
+        </div>
+
+        {/* Biometric & Fingerprint Security Card */}
+        <div className="card" style={{ gridColumn: '1 / -1', border: '1px solid var(--border-accent)' }}>
+          <div className="card-header">
+            <div className="flex items-center gap-2">
+              <Fingerprint size={20} color="var(--primary-light)" />
+              <span className="card-title">Mobile Fingerprint & Biometric Lock</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Protect your financial records on your phone. When enabled, Finance Manager will prompt for your device's 
+              <strong> Fingerprint / Face ID</strong> or <strong>Security PIN</strong> whenever you open the app.
+            </p>
+
+            <div className="flex-between" style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--border)' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>App Lock Status</div>
+                <div style={{ fontSize: '0.75rem', color: isLockEnabled() ? 'var(--income)' : 'var(--text-muted)' }}>
+                  {isLockEnabled() ? '● ACTIVE — Biometric protection enabled' : '○ Disabled'}
+                </div>
+              </div>
+
+              {isLockEnabled() ? (
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm"
+                  onClick={() => {
+                    disableAppLock()
+                    toast.success('App Lock Disabled')
+                    // Force rerender
+                    loadCategories()
+                  }}
+                >
+                  Disable Lock
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={async () => {
+                    const res = await registerBiometric('Albin')
+                    if (res.success) {
+                      toast.success('Fingerprint Lock Enabled!')
+                    } else {
+                      // Fallback to PIN setup prompt
+                      const userPin = prompt('Enter a 4-digit Security PIN to protect your app:', '1234')
+                      if (userPin && userPin.length >= 4) {
+                        await setLockPin(userPin)
+                        toast.success('PIN Lock Enabled!')
+                      } else {
+                        toast.error('App Lock was not configured')
+                      }
+                    }
+                    loadCategories()
+                  }}
+                >
+                  <Fingerprint size={16} /> Enable Fingerprint Lock
+                </button>
+              )}
+            </div>
+
+            {/* Set / Change PIN row */}
+            <div className="flex-between" style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--border)' }}>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>4-Digit Backup PIN</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Used as fallback if fingerprint sensor is wet or unavailable
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={async () => {
+                  const newPin = prompt('Enter new 4 to 6 digit PIN:', '')
+                  if (newPin && newPin.length >= 4) {
+                    await setLockPin(newPin)
+                    toast.success('Security PIN Updated!')
+                    loadCategories()
+                  }
+                }}
+              >
+                Set / Change PIN
+              </button>
+            </div>
+
+          </div>
         </div>
       </div>
 
