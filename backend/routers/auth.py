@@ -42,15 +42,15 @@ def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session 
 
 @router.post("/login", response_model=TokenResponse)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password_hash):
+    user: Optional[User] = db.query(User).filter(User.username == form_data.username).first()
+    if not user or not verify_password(form_data.password, str(user.password_hash)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    token = create_access_token({"sub": user.username})
-    return {"access_token": token, "token_type": "bearer", "username": user.username}
+    token = create_access_token({"sub": str(user.username)})
+    return {"access_token": token, "token_type": "bearer", "username": str(user.username)}
 
 
 @router.post("/change-password")
@@ -59,9 +59,10 @@ def change_password(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if not verify_password(data.current_password, current_user.password_hash):
+    if not verify_password(data.current_password, str(current_user.password_hash)):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
-    current_user.password_hash = hash_password(data.new_password)
+    # pyrefly: ignore [bad-assignment]
+    current_user.password_hash = hash_password(data.new_password)  # type: ignore[assignment]
     db.commit()
     return {"message": "Password changed successfully"}
 
