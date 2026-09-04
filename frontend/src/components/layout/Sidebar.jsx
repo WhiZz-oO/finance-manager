@@ -70,18 +70,9 @@ export default function Sidebar() {
           {user?.username?.[0]?.toUpperCase() || 'A'}
         </div>
         <div className="sidebar-user-info">
-          <div className="sidebar-username">{user?.username || 'User'}</div>
+          <div className="sidebar-username">{user?.username || 'Albin'}</div>
           <div className="sidebar-user-role">Personal</div>
         </div>
-        <button
-          id="btn-logout"
-          onClick={handleLogout}
-          className="btn btn-ghost btn-icon btn-sm"
-          title="Logout"
-          style={{ marginLeft: 'auto' }}
-        >
-          <LogOut size={15} />
-        </button>
       </div>
     </aside>
   )

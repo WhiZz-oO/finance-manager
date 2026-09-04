@@ -19,14 +19,7 @@ api.interceptors.request.use((config) => {
 // Handle 401 globally
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('fm_token')
-      localStorage.removeItem('fm_user')
-      window.location.href = '/login'
-    }
-    return Promise.reject(err)
-  }
+  (err) => Promise.reject(err)
 )
 
 export default api

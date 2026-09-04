@@ -9,7 +9,7 @@ from models.user import User
 from utils.security import verify_password, create_access_token, hash_password, decode_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 
 class TokenResponse(BaseModel):
@@ -23,14 +23,21 @@ class PasswordChangeRequest(BaseModel):
     new_password: str
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    payload = decode_token(token)
-    if not payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-    user = db.query(User).filter(User.username == payload.get("sub")).first()
-    if not user or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
+def get_current_user(token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    # If token provided, attempt to decode it
+    if token:
+        payload = decode_token(token)
+        if payload:
+            user = db.query(User).filter(User.username == payload.get("sub")).first()
+            if user and user.is_active:
+                return user
+    
+    # Single-user fallback: automatically use the active admin user
+    default_user = db.query(User).filter(User.is_active == True).first()
+    if default_user:
+        return default_user
+        
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No active user found")
 
 
 @router.post("/login", response_model=TokenResponse)

@@ -1,37 +1,15 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import { authApi } from '../api/client'
+import { createContext, useContext, useState } from 'react'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('fm_user')) } catch { return null }
-  })
-  const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState({ username: 'Albin' })
 
-  const login = async (username, password) => {
-    setLoading(true)
-    try {
-      const res = await authApi.login(username, password)
-      localStorage.setItem('fm_token', res.data.access_token)
-      localStorage.setItem('fm_user', JSON.stringify({ username: res.data.username }))
-      setUser({ username: res.data.username })
-      return { ok: true }
-    } catch (err) {
-      return { ok: false, error: err.response?.data?.detail || 'Login failed' }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const logout = () => {
-    localStorage.removeItem('fm_token')
-    localStorage.removeItem('fm_user')
-    setUser(null)
-  }
+  const login = async () => ({ ok: true })
+  const logout = () => {}
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading: false }}>
       {children}
     </AuthContext.Provider>
   )

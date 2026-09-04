@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { AuthProvider } from './context/AuthContext'
 import Layout from './components/layout/Layout'
-import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import AddTransaction from './pages/AddTransaction'
 import Transactions from './pages/Transactions'
@@ -13,28 +12,12 @@ import Receipts from './pages/Receipts'
 import Backup from './pages/Backup'
 import Settings from './pages/Settings'
 
-function ProtectedRoute({ children }) {
-  const { user } = useAuth()
-  if (!user) {
-    return <Navigate to="/login" replace />
-  }
-  return children
-}
-
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
+          <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="add-transaction" element={<AddTransaction />} />
             <Route path="transactions" element={<Transactions />} />
