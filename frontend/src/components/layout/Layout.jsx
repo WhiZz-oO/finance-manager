@@ -1,16 +1,35 @@
+import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
+import MobileHeader from './MobileHeader'
+import BottomNav from './BottomNav'
+import MobileDrawer from './MobileDrawer'
 import { Toaster } from 'react-hot-toast'
 
 export default function Layout() {
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
   return (
     <div className="app-layout">
+      {/* Desktop Sidebar (hidden on mobile) */}
       <Sidebar />
+
+      {/* Mobile Top Header (hidden on desktop) */}
+      <MobileHeader onOpenMenu={() => setDrawerOpen(true)} />
+
+      {/* Mobile Slide-Out Drawer */}
+      <MobileDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+      {/* Main Content Body */}
       <main className="main-content">
         <div className="page-body">
           <Outlet />
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation Bar (hidden on desktop) */}
+      <BottomNav onOpenMenu={() => setDrawerOpen(true)} />
+
       <Toaster
         position="top-right"
         toastOptions={{
