@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, PlusCircle, ArrowLeftRight, Wallet, PieChart, Receipt,
-  Target, Shield, Settings, LogOut, TrendingUp, RefreshCw,
+  Target, Shield, Settings, TrendingUp, RefreshCw, Lock,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -24,14 +24,8 @@ const NAV = [
   ]},
 ]
 
-export default function Sidebar() {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+export default function Sidebar({ onLock }) {
+  const { user } = useAuth()
 
   return (
     <aside className="sidebar">
@@ -73,6 +67,17 @@ export default function Sidebar() {
           <div className="sidebar-username">{user?.username || 'Albin'}</div>
           <div className="sidebar-user-role">Personal</div>
         </div>
+        {onLock && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon btn-sm"
+            onClick={onLock}
+            title="Lock App Instantly"
+            style={{ marginLeft: 'auto' }}
+          >
+            <Lock size={15} />
+          </button>
+        )}
       </div>
     </aside>
   )

@@ -5,23 +5,77 @@ import MobileHeader from './MobileHeader'
 import BottomNav from './BottomNav'
 import MobileDrawer from './MobileDrawer'
 import BiometricLockScreen from '../common/BiometricLockScreen'
-import { isLockEnabled, isSessionUnlocked } from '../../utils/biometrics'
-import { Toaster } from 'react-hot-toast'
+import { isLockEnabled, isSessionUnlocked, setSessionUnlocked, registerBiometric, setLockPin } from '../../utils/biometrics'
+import toast, { Toaster } from 'react-hot-toast'
 
 export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [isLocked, setIsLocked] = useState(() => isLockEnabled() && !isSessionUnlocked())
 
+  // Lock the app immediately
+  const handleLockApp = async () => {
+    if (!isLockEnabled()) {
+      // If not configured yet, offer quick setup
+      const userPin = prompt('Set a 4-digit PIN to lock your app:', '1234')
+      if (userPin && userPin.length >= 4) {
+        await setLockPin(userPin)
+        toast.success('App Lock Enabled!')
+      } else {
+        toast('Please configure Fingerprint or PIN in Settings first', { icon: '🔒' })
+        return
+      }
+    }
+    setSessionUnlocked(false)
+    setIsLocked(true)
+    toast('App Locked', { icon: '🔒' })
+  }
+
+  // Auto-lock when phone app is closed, switched away, or screen turned off
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && isLockEnabled()) {
+        // App went to background - lock immediately
+        setSessionUnlocked(false)
+      } else if (document.visibilityState === 'visible' && isLockEnabled()) {
+        // App returned to foreground - enforce lock screen
+        if (!isSessionUnlocked()) {
+          setIsLocked(true)
+        }
+      }
+    }
+
+    const handlePageHide = () => {
+      if (isLockEnabled()) {
+        setSessionUnlocked(false)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('pagehide', handlePageHide)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('pagehide', handlePageHide)
+    }
+  }, [])
+
   return (
     <div className="app-layout">
       {/* Biometric / PIN Lock Screen */}
-      {isLocked && <BiometricLockScreen onUnlock={() => setIsLocked(false)} />}
+      {isLocked && (
+        <BiometricLockScreen
+          onUnlock={() => {
+            setSessionUnlocked(true)
+            setIsLocked(false)
+          }}
+        />
+      )}
 
       {/* Desktop Sidebar (hidden on mobile) */}
-      <Sidebar />
+      <Sidebar onLock={handleLockApp} />
 
       {/* Mobile Top Header (hidden on desktop) */}
-      <MobileHeader onOpenMenu={() => setDrawerOpen(true)} />
+      <MobileHeader onOpenMenu={() => setDrawerOpen(true)} onLock={handleLockApp} />
 
       {/* Mobile Slide-Out Drawer */}
       <MobileDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
