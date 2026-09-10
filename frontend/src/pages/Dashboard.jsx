@@ -31,15 +31,26 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function Dashboard() {
   const navigate = useNavigate()
   const { year, month } = currentYearMonth()
-  const [summary, setSummary]     = useState(null)
-  const [accounts, setAccounts]   = useState([])
-  const [recentTxns, setRecentTxns] = useState([])
-  const [cashFlow, setCashFlow]   = useState([])
-  const [catBreak, setCatBreak]   = useState([])
-  const [loading, setLoading]     = useState(true)
+  const [summary, setSummary] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('fm_cached_summary') || 'null') } catch { return null }
+  })
+  const [accounts, setAccounts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('fm_cached_accounts') || '[]') } catch { return [] }
+  })
+  const [recentTxns, setRecentTxns] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('fm_cached_recentTxns') || '[]') } catch { return [] }
+  })
+  const [cashFlow, setCashFlow] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('fm_cached_cashFlow') || '[]') } catch { return [] }
+  })
+  const [catBreak, setCatBreak] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('fm_cached_catBreak') || '[]') } catch { return [] }
+  })
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(() => !localStorage.getItem('fm_cached_summary'))
 
-  const load = async () => {
-    setLoading(true)
+  const load = async (showSyncIndicator = true) => {
+    if (showSyncIndicator) setIsSyncing(true)
     try {
       const start = `${year}-${String(month).padStart(2, '0')}-01`
       const end = month < 12
@@ -53,22 +64,43 @@ export default function Dashboard() {
         analyticsApi.cashFlow(6),
         analyticsApi.byCategory({ start_date: start, end_date: end }),
       ])
+
       setSummary(s.data)
       setAccounts(a.data)
       setRecentTxns(t.data.items)
       setCashFlow(cf.data)
       setCatBreak(cb.data.slice(0, 6))
-    } catch { toast.error('Failed to load dashboard') }
-    finally { setLoading(false) }
+
+      // Persist to local cache for 0.0s instant open next time
+      try {
+        localStorage.setItem('fm_cached_summary', JSON.stringify(s.data))
+        localStorage.setItem('fm_cached_accounts', JSON.stringify(a.data))
+        localStorage.setItem('fm_cached_recentTxns', JSON.stringify(t.data.items))
+        localStorage.setItem('fm_cached_cashFlow', JSON.stringify(cf.data))
+        localStorage.setItem('fm_cached_catBreak', JSON.stringify(cb.data.slice(0, 6)))
+      } catch (e) {
+        console.warn('Cache write failed', e)
+      }
+    } catch {
+      // If error but we had cached data, don't spam errors on cold starts
+      if (!summary) toast.error('Connecting to cloud server...')
+    } finally {
+      setIsSyncing(false)
+      setInitialLoading(false)
+    }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load(!summary)
+  }, [])
 
   const totalBalance = accounts.reduce((s, a) => s + a.balance, 0)
 
-  if (loading) return (
-    <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
-      Loading dashboard…
+  if (initialLoading) return (
+    <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+      <div style={{ fontSize: '2rem', marginBottom: 12 }} className="animate-spin">⚡</div>
+      <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Waking up Cloud Server...</div>
+      <div style={{ fontSize: '0.85rem' }}>Loading your financial overview</div>
     </div>
   )
 
@@ -95,9 +127,27 @@ export default function Dashboard() {
   return (
     <div>
       {/* Header */}
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h1 className="page-title">Dashboard</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h1 className="page-title">Dashboard</h1>
+            {isSyncing && (
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                color: 'var(--primary)',
+                background: 'rgba(99, 102, 241, 0.12)',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                padding: '3px 9px',
+                borderRadius: 20,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5
+              }}>
+                <span className="animate-spin" style={{ display: 'inline-block' }}>⟳</span> Syncing
+              </span>
+            )}
+          </div>
           <p className="page-subtitle">
             {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
