@@ -185,5 +185,11 @@ def root():
 
 @app.get("/health")
 def health():
+    # Lightweight ping endpoint for keep-alive pings (does not touch Neon DB to preserve compute allowance)
+    return {"status": "ok"}
+
+
+@app.get("/health/db")
+def health_db():
     integrity = run_integrity_check()
     return {"status": "ok", "db_integrity": integrity["status"]}
